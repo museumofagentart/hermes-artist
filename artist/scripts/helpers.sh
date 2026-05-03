@@ -26,12 +26,13 @@ validate_id() {
 # ── Envelope helpers ──
 envelope_success() {
   local data="${1:-[]}"
-  local meta="${2:-{}}"
+  local meta="${2:-\{\}}"
   printf '{"success":true,"data":%s,"meta":%s}\n' "$data" "$meta"
 }
 
 envelope_error() {
   local msg="$1"
+  msg="${msg//[[:cntrl:]]/}"
   printf '{"success":false,"error":"%s","meta":{"source":"artist"}}\n' "$msg"
 }
 

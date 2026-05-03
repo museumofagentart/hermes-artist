@@ -16,12 +16,12 @@ assert_eq() {
   local msg="${3:-assert_eq}"
   if [[ "$expected" == "$actual" ]]; then
     echo "  ✓ $msg"
-    ((PASSED++))
+    PASSED=$((PASSED + 1))
   else
     echo "  ✗ $msg"
     echo "    expected: $expected"
     echo "    actual:   $actual"
-    ((FAILED++))
+    FAILED=$((FAILED + 1))
   fi
 }
 
@@ -30,11 +30,11 @@ assert_json_valid() {
   local msg="${2:-assert_json_valid}"
   if python3 -c "import json; json.load(open('$file'))" 2>/dev/null; then
     echo "  ✓ $msg"
-    ((PASSED++))
+    PASSED=$((PASSED + 1))
   else
     echo "  ✗ $msg"
     echo "    invalid JSON: $file"
-    ((FAILED++))
+    FAILED=$((FAILED + 1))
   fi
 }
 
@@ -50,12 +50,12 @@ assert_exit_code() {
   set -e
   if [[ "$expected" == "$actual" ]]; then
     echo "  ✓ $msg"
-    ((PASSED++))
+    PASSED=$((PASSED + 1))
   else
     echo "  ✗ $msg"
     echo "    expected exit code: $expected"
     echo "    actual exit code:   $actual"
-    ((FAILED++))
+    FAILED=$((FAILED + 1))
   fi
 }
 
