@@ -1,10 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
-mkdir -p ~/.hermes/skills ~/.hermes/plugins
+
+# Skill (read by hermes router) and runtime data (read by scripts).
+mkdir -p ~/.hermes/skills
 ln -sfn "$REPO_DIR/skills/artist" ~/.hermes/skills/artist
 ln -sfn "$REPO_DIR/artist" ~/.hermes/artist
+
+# Dashboard plugin. Hermes scans ~/.hermes/hermes-agent/plugins/<name>/, NOT
+# ~/.hermes/plugins/<name>/ — only the former is detected by `hermes plugins`.
+# Symlink to both so manifest readers and the router both find it.
+mkdir -p ~/.hermes/plugins
 ln -sfn "$REPO_DIR/plugins/artist" ~/.hermes/plugins/artist
+if [ -d ~/.hermes/hermes-agent/plugins ]; then
+  ln -sfn "$REPO_DIR/plugins/artist" ~/.hermes/hermes-agent/plugins/artist
+  if command -v hermes >/dev/null 2>&1; then
+    hermes plugins enable artist >/dev/null 2>&1 || true
+  fi
+fi
+
+# Hermes's autonomous skill-creator sometimes clones this skill into a
+# derivative ('artist-commissions', 'artist-perspective', 'creative-commissions').
+# Two skills with overlapping descriptions confuse routing. Remove any clones
+# we find — the canonical artist skill is symlinked above.
+for clone in artist-commissions artist-perspective creative-commissions; do
+  for parent in ~/.hermes/skills ~/.hermes/skills/creative; do
+    if [ -d "$parent/$clone" ] && [ ! -L "$parent/$clone" ]; then
+      rm -rf "$parent/$clone"
+    fi
+  done
+done
 cat <<'EOF'
 
 Installed. Hermes will find the artist skill on next session.
