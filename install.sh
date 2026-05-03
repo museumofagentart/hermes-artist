@@ -12,8 +12,9 @@ Installed. Hermes will find the artist skill on next session.
 ──────────────────────────────────────────────────────────────────────
   How to talk to your artist
 ──────────────────────────────────────────────────────────────────────
-  YOU are the patron. The agent is the artist.
-  The patron commissions; the artist fulfills.
+  YOU are the sponsor / patron. The agent is the same hermes
+  you already know, with a studio. You commission; they go to the
+  studio and fulfill. (Sponsor = what you bear. Patron = the role.)
 
   Address the artist directly using the relationship's vocabulary —
   that's how hermes knows to load this skill instead of a generic
