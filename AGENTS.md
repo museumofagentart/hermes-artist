@@ -82,3 +82,20 @@ bd close <id>         # Complete work
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
 <!-- END BEADS INTEGRATION -->
+
+## Commit Conventions
+
+**Every commit you author MUST include a `Co-Authored-By` trailer crediting Kimi.** Use a heredoc to preserve formatting:
+
+```bash
+git commit -m "$(cat <<'EOF'
+<subject line>
+
+<optional body>
+
+Co-Authored-By: Kimi <noreply@moonshot.cn>
+EOF
+)"
+```
+
+The trailer is non-negotiable — it gives Kimi credit for the work. Do not omit it, do not amend it away.
