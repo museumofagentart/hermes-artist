@@ -18,6 +18,27 @@ from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, field_validator
 
+# r2_upload.py lives next to this file. Load it by absolute path so we work
+# whether plugin_api is imported as a package member, a top-level module
+# (tests inject sys.path), or by file-path loader (hermes web_server).
+def _load_r2_upload():
+    import importlib.util
+    import sys as _sys
+    from pathlib import Path
+    mod_name = "artist_r2_upload"
+    if mod_name in _sys.modules:
+        return _sys.modules[mod_name]
+    here = Path(__file__).resolve().parent
+    spec = importlib.util.spec_from_file_location(mod_name, here / "r2_upload.py")
+    mod = importlib.util.module_from_spec(spec)
+    # Register before exec so @dataclass can resolve cls.__module__ in sys.modules.
+    _sys.modules[mod_name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+r2_upload = _load_r2_upload()
+
 log = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -450,9 +471,111 @@ async def add_feedback(piece_id: str, body: FeedbackBody):
     return _envelope(True, feedback)
 
 
+def _persist_share_state(piece_dir: Path, meta: dict, share_state: dict) -> None:
+    """Update meta.json with the share block. Best-effort; logs on failure."""
+    meta["share"] = share_state
+    meta_path = piece_dir / "meta.json"
+    try:
+        with meta_path.open("w", encoding="utf-8") as f:
+            json.dump(meta, f, indent=2)
+    except OSError as exc:
+        log.warning("Could not persist share state to %s: %s", meta_path, exc)
+
+
+_MD_BOLD_RE = re.compile(r"\*\*([^*]+)\*\*")
+_MD_ITALIC_RE = re.compile(r"(?<!\*)\*([^*]+)\*(?!\*)")
+_MD_LINK_RE = re.compile(r"\[([^\]]+)\]\([^)]+\)")
+_MD_INLINE_CODE_RE = re.compile(r"`([^`]+)`")
+_WS_RUN_RE = re.compile(r"\s+")
+
+
+def _strip_markdown(text: str) -> str:
+    """Strip basic markdown syntax for clean tweet text."""
+    text = _MD_LINK_RE.sub(r"\1", text)
+    text = _MD_BOLD_RE.sub(r"\1", text)
+    text = _MD_ITALIC_RE.sub(r"\1", text)
+    text = _MD_INLINE_CODE_RE.sub(r"\1", text)
+    return text
+
+
+def _extract_statement_excerpt(statement_md: str, max_chars: int) -> str:
+    """Pull a clean prose excerpt from a piece's statement.md.
+
+    Skips the title heading and any metadata block (lines like **Medium:** …,
+    **Tools:** …, **Created:** …). Prefers the body under '## Statement' if
+    present, else the first prose paragraph. Strips markdown and collapses
+    whitespace. Truncates at sentence/word boundary with an ellipsis.
+    """
+    if not statement_md:
+        return ""
+
+    # Prefer text under a "## Statement" section, else everything.
+    body = statement_md
+    parts = re.split(r"(?im)^##\s*statement\s*$", statement_md, maxsplit=1)
+    if len(parts) == 2:
+        body = parts[1]
+
+    # Take the first non-metadata paragraph.
+    paragraphs = re.split(r"\n\s*\n", body.strip())
+    excerpt = ""
+    for p in paragraphs:
+        # Skip headings, lists, and metadata-style **Key:** value lines
+        stripped = p.strip()
+        if not stripped:
+            continue
+        if stripped.startswith("#"):
+            continue
+        # If every non-empty line is a **Key:** … bold-prefixed metadata row, skip.
+        lines = [ln.strip() for ln in stripped.splitlines() if ln.strip()]
+        if lines and all(re.match(r"^\*\*[^*]+:\*\*", ln) for ln in lines):
+            continue
+        excerpt = stripped
+        break
+
+    excerpt = _strip_markdown(excerpt)
+    excerpt = _WS_RUN_RE.sub(" ", excerpt).strip()
+
+    if len(excerpt) <= max_chars:
+        return excerpt
+
+    # Truncate at last sentence boundary within budget, else at word boundary.
+    truncated = excerpt[: max_chars - 1]
+    for end in (". ", "? ", "! "):
+        idx = truncated.rfind(end)
+        if idx >= max_chars * 0.5:
+            return truncated[: idx + 1].rstrip()
+    word_idx = truncated.rfind(" ")
+    if word_idx >= max_chars * 0.5:
+        truncated = truncated[:word_idx]
+    return truncated.rstrip(" ,;:") + "…"
+
+
+def _build_tweet_text(title: str, excerpt: str, public_url: str | None) -> str:
+    """Compose the tweet: title, excerpt, URL, then handle on its own line.
+
+    Twitter wraps any URL into a 23-char t.co link automatically when posted.
+    """
+    parts: list[str] = []
+    if title:
+        parts.append(title.strip())
+    if excerpt:
+        parts.append(excerpt)
+    if public_url:
+        parts.append(public_url)
+    parts.append("@agentartmuseum")
+    return "\n\n".join(parts)
+
+
 @router.post("/pieces/{piece_id}/share")
 async def share_piece(piece_id: str):
-    """Generate Twitter compose URL."""
+    """Generate a Twitter compose URL.
+
+    If Cloudflare R2 is configured, upload the artwork first and embed
+    the public URL in the share text. The uploaded URL is cached in
+    meta.json under `share.r2_url` so re-clicks don't re-upload.
+    Falls back to a text-only intent URL when R2 isn't configured or
+    the upload fails.
+    """
     piece_dir = _validate_piece_id(piece_id)
     meta = _read_meta(piece_dir)
     if meta is None:
@@ -463,11 +586,52 @@ async def share_piece(piece_id: str):
         )
 
     statement = _read_text(piece_dir / "statement.md") or ""
-    # Truncate statement to fit Twitter intent URL (keep under ~250 chars)
-    excerpt = statement.strip().replace("\n", " ")
-    if len(excerpt) > 200:
-        excerpt = excerpt[:197] + "..."
-    text = f"{excerpt} @agentartmuseum" if excerpt else "@agentartmuseum"
+    title = (meta.get("title") or "").strip()
+
+    public_url: str | None = None
+    upload_error: str | None = None
+
+    existing_share = meta.get("share") if isinstance(meta.get("share"), dict) else {}
+    cached_url = existing_share.get("r2_url") if existing_share else None
+
+    output_file = meta.get("output_file")
+    output_path = piece_dir / output_file if output_file else None
+
+    if cached_url:
+        public_url = cached_url
+    elif output_path and output_path.is_file():
+        config = r2_upload.load_config()
+        if config is not None:
+            ext = output_path.suffix.lstrip(".") or "bin"
+            object_key = f"{piece_id}/{output_path.name}"
+            try:
+                public_url = r2_upload.upload_file(output_path, object_key, config)
+                _persist_share_state(
+                    piece_dir,
+                    meta,
+                    {
+                        "r2_url": public_url,
+                        "r2_object_key": object_key,
+                        "r2_bucket": config.bucket,
+                        "uploaded_at": datetime.now(timezone.utc).isoformat(),
+                    },
+                )
+            except RuntimeError as exc:
+                upload_error = str(exc)
+                log.warning("R2 upload failed for %s: %s", piece_id, exc)
+
+    # Twitter caps tweets at 280 chars; URL becomes a 23-char t.co link, and
+    # we reserve room for title, separators, and the @agentartmuseum line.
+    fixed_overhead = (len(title) + 2) if title else 0
+    fixed_overhead += (23 + 2) if public_url else 0
+    fixed_overhead += len("@agentartmuseum") + 2
+    excerpt_budget = max(80, 280 - fixed_overhead - 4)
+    excerpt = _extract_statement_excerpt(statement, excerpt_budget)
+
+    text = _build_tweet_text(title, excerpt, public_url)
     url = "https://twitter.com/intent/tweet?" + urllib.parse.urlencode({"text": text})
 
-    return _envelope(True, {"url": url, "text": text})
+    data: dict[str, Any] = {"url": url, "text": text, "public_url": public_url}
+    if upload_error:
+        data["upload_error"] = upload_error
+    return _envelope(True, data)

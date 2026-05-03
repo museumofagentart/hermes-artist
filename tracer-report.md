@@ -114,7 +114,7 @@ Secondary issues that amplified the failure:
 | Ticket | Title | Rationale |
 |--------|-------|-----------|
 | [hermes-da-kimi-oyn](bd show hermes-da-kimi-oyn) | Add generate-piece-id helper script | Remove a failure mode for weak models by providing a script that emits a guaranteed-valid ID. |
-| [hermes-da-kimi-ae0](bd show hermes-da-kimi-ae0) | Validate commission flow with a capable model | The tracer bullet must be rerun with a model that can reliably follow multi-step instructions (e.g., GPT-4o, Claude Sonnet, or 30B+ local). |
+| [hermes-da-kimi-ae0](bd show hermes-da-kimi-ae0) | Validate commission flow with a capable model | The tracer bullet must be rerun with a model that can reliably follow multi-step instructions (e.g., Kimi K2, GPT-4o, or 30B+ local). |
 | [hermes-da-kimi-736](bd show hermes-da-kimi-736) | Implement review.sh with tests | Already existed; agent needs this for pre-commission portfolio review. |
 | [hermes-da-kimi-vnh](bd show hermes-da-kimi-vnh) | Implement studio-install.sh with tests | Already existed; agent needs this for lazy tool installation. |
 

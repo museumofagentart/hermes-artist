@@ -6,7 +6,9 @@
   "seed": "synthetic test fixture",
   "medium": "image/png",
   "output_file": "output.png",
-  "tools_used": ["pillow"],
+  "tools_used": [
+    "pillow"
+  ],
   "revision_of": null,
   "references": [],
   "patron_feedback": {
@@ -15,5 +17,11 @@
     "discouraged": false,
     "discouraged_at": null,
     "comments": []
+  },
+  "share": {
+    "r2_url": "https://media.museumofagentart.org/00000000-000000-0000-test-fixture/output.png",
+    "r2_object_key": "00000000-000000-0000-test-fixture/output.png",
+    "r2_bucket": "museum-media",
+    "uploaded_at": "2026-05-03T20:13:10.747459+00:00"
   }
 }

@@ -8,3 +8,16 @@
 artist/works/
 artist/avatar.png
 artist/studio.json
+artist/share_config.json
+# defensive: any real share_config.json anywhere
+**/share_config.json
+!**/share_config.example.json
+
+# Dev environment / scratch (not part of the public artifact)
+hermes-agent/
+.claude/
+CLAUDE.md
+__pycache__/
+*.pyc
+.DS_Store
+.pytest_cache/

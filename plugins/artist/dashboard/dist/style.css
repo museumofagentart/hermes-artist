@@ -222,6 +222,8 @@
   overflow-wrap: break-word;
   margin: 0;
   font-family: var(--theme-font-sans);
+  max-height: 40vh;
+  overflow-y: auto;
 }
 
 /* Process toggle */
@@ -298,6 +300,128 @@
 
 .artist-btn-share {
   margin-left: auto;
+}
+
+/* Share panel */
+.artist-share-panel {
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.25rem * var(--theme-spacing-mul, 1) * 2);
+  padding: calc(0.25rem * var(--theme-spacing-mul, 1) * 3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--midground-base) 4%, var(--background-base));
+  margin-top: calc(0.25rem * var(--theme-spacing-mul, 1) * 2);
+}
+
+.artist-share-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(0.25rem * var(--theme-spacing-mul, 1) * 2);
+  font-size: 0.8125rem;
+}
+
+.artist-share-status-ok {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.artist-share-status-warn {
+  color: var(--color-warning);
+  font-weight: 500;
+}
+
+.artist-share-status-muted {
+  color: var(--color-muted-foreground, var(--color-foreground));
+  opacity: 0.75;
+}
+
+.artist-share-close {
+  background: none;
+  border: none;
+  color: var(--color-foreground);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  opacity: 0.6;
+}
+
+.artist-share-close:hover {
+  opacity: 1;
+}
+
+.artist-share-url-row {
+  display: flex;
+  align-items: center;
+  gap: calc(0.25rem * var(--theme-spacing-mul, 1) * 2);
+}
+
+.artist-share-url {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--theme-font-mono, ui-monospace, monospace);
+  font-size: 0.75rem;
+  color: var(--color-foreground);
+  text-decoration: none;
+  background: var(--color-card);
+  padding: calc(0.25rem * var(--theme-spacing-mul, 1) * 1.5) calc(0.25rem * var(--theme-spacing-mul, 1) * 2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.artist-share-url:hover {
+  border-color: var(--color-ring);
+}
+
+.artist-share-copy-btn {
+  flex-shrink: 0;
+}
+
+.artist-share-tweet-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-foreground, var(--color-foreground));
+  opacity: 0.7;
+  margin-top: 0.25rem;
+}
+
+.artist-share-tweet {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: calc(0.25rem * var(--theme-spacing-mul, 1) * 2.5);
+  font-family: var(--theme-font-sans);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  color: var(--color-foreground);
+}
+
+.artist-share-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: calc(0.25rem * var(--theme-spacing-mul, 1) * 2);
+}
+
+.artist-share-tweet-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.artist-share-detail-muted {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground, var(--color-foreground));
+  opacity: 0.7;
+  margin: 0;
 }
 
 /* Comment form */

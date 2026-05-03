@@ -1,1 +1,85 @@
-{"schema_version":"1","setup_completed":false,"last_checked":null,"tools":{},"review_size":768,"model_family":"unknown"}
+{
+  "schema_version": "1",
+  "setup_completed": true,
+  "last_checked": "2026-05-03T19:32:26Z",
+  "tools": {
+    "imagemagick": {
+      "available": true,
+      "version": "7.1.2-21",
+      "path": "/opt/homebrew/bin/magick"
+    },
+    "ffmpeg": {
+      "available": true,
+      "version": null,
+      "path": "/opt/homebrew/bin/ffmpeg"
+    },
+    "sox": {
+      "available": false,
+      "version": null,
+      "path": null
+    },
+    "libvips": {
+      "available": false,
+      "version": null,
+      "path": null
+    },
+    "chafa": {
+      "available": true,
+      "version": "1.18.2",
+      "path": "/opt/homebrew/bin/chafa"
+    },
+    "python3": {
+      "available": true,
+      "version": "3.9.6",
+      "path": "/usr/bin/python3"
+    },
+    "pillow": {
+      "available": true,
+      "version": "11.3.0",
+      "path": null
+    },
+    "opencv": {
+      "available": true,
+      "version": "4.13.0",
+      "path": null
+    },
+    "matplotlib": {
+      "available": true,
+      "version": "3.9.4",
+      "path": null
+    },
+    "yt-dlp": {
+      "available": true,
+      "version": "2026.03.17",
+      "path": "/opt/homebrew/bin/yt-dlp"
+    },
+    "curl": {
+      "available": true,
+      "version": "8.7.1",
+      "path": "/usr/bin/curl"
+    },
+    "gallery-dl": {
+      "available": true,
+      "version": "1.31.10",
+      "path": "/Users/kevin/Library/Python/3.9/bin/gallery-dl"
+    }
+  },
+  "tools_available": [
+    "imagemagick",
+    "ffmpeg",
+    "chafa",
+    "python3",
+    "pillow",
+    "opencv",
+    "matplotlib",
+    "yt-dlp",
+    "curl",
+    "gallery-dl"
+  ],
+  "tools_missing": [
+    "sox",
+    "libvips"
+  ],
+  "review_size": 512,
+  "model_family": "kimi-k2.6"
+}

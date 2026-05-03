@@ -336,13 +336,195 @@ def test_perspective_missing(client: TestClient):
 
 def test_share(client: TestClient, tmp_artist_dir: Path):
     piece_id = "20260503-120001-8939-test-share"
-    make_piece_dir(api.WORKS_DIR, piece_id, statement="Beautiful art.")
+    make_piece_dir(api.WORKS_DIR, piece_id, title="Beautiful Art", statement="Beautiful art.")
     resp = client.post(f"/api/plugins/artist/pieces/{piece_id}/share")
     assert resp.status_code == 200
     body = resp.json()
     assert_envelope(body, success=True)
     assert "twitter.com/intent/tweet" in body["data"]["url"]
     assert "@agentartmuseum" in body["data"]["text"]
+    # @agentartmuseum on its own line
+    assert body["data"]["text"].endswith("\n\n@agentartmuseum") or body["data"]["text"] == "@agentartmuseum"
+    # No R2 configured → no public_url
+    assert body["data"].get("public_url") is None
+
+
+def test_share_strips_metadata_block(client: TestClient, tmp_artist_dir: Path):
+    """Markdown title, **Key:** … metadata rows, and bold/italic syntax must
+    not appear in the tweet text."""
+    piece_id = "20260503-120001-8940-test-strip"
+    statement_md = (
+        "# I Am The Loop\n\n"
+        "**Medium:** video/mp4, 1280x720, 45 seconds, 30fps  \n"
+        "**Tools:** Python (Pillow, NumPy), ffmpeg  \n"
+        "**Created:** 2026-05-03\n\n"
+        "## Statement\n\n"
+        "This is a self-portrait in motion — not my face, but my rhythm.\n\n"
+        "More body that should not appear in the excerpt because we cap it.\n"
+    )
+    make_piece_dir(api.WORKS_DIR, piece_id, title="I Am The Loop", statement=statement_md)
+    resp = client.post(f"/api/plugins/artist/pieces/{piece_id}/share")
+    body = resp.json()
+    text = body["data"]["text"]
+    assert "**" not in text
+    assert "Medium:" not in text
+    assert "Created:" not in text
+    assert "## Statement" not in text
+    assert "# I Am The Loop" not in text  # heading hash stripped
+    assert text.startswith("I Am The Loop\n\n")
+    assert "self-portrait in motion" in text
+    assert text.endswith("\n\n@agentartmuseum")
+
+
+def test_extract_statement_excerpt_truncates_at_sentence():
+    text = (
+        "First sentence is short. Second sentence has more content here. "
+        "Third sentence is even longer and should not fit."
+    )
+    out = api._extract_statement_excerpt(text, 60)
+    assert out.endswith(".") or out.endswith("…")
+    assert len(out) <= 60
+
+
+def test_share_uploads_to_r2_when_configured(
+    client: TestClient, tmp_artist_dir: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """When R2 is configured, share uploads the artwork and embeds the URL."""
+    piece_id = "20260503-120001-8941-test-r2-share"
+    make_piece_dir(
+        api.WORKS_DIR,
+        piece_id,
+        statement="Captured light.",
+        output_bytes=b"\x89PNG\r\n\x1a\nfakepng",
+    )
+
+    fake_config = api.r2_upload.R2Config(
+        account_id="acct",
+        access_key_id="ak",
+        secret_access_key="sk",
+        bucket="art",
+        public_base_url="https://cdn.example.com",
+    )
+    upload_calls = []
+
+    def fake_load_config():
+        return fake_config
+
+    def fake_upload(local_path, object_key, config):
+        upload_calls.append((Path(local_path), object_key, config))
+        return f"{config.public_base_url}/{object_key}"
+
+    monkeypatch.setattr(api.r2_upload, "load_config", fake_load_config)
+    monkeypatch.setattr(api.r2_upload, "upload_file", fake_upload)
+
+    resp = client.post(f"/api/plugins/artist/pieces/{piece_id}/share")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert_envelope(body, success=True)
+    expected_url = f"https://cdn.example.com/{piece_id}/output.png"
+    assert body["data"]["public_url"] == expected_url
+    assert expected_url in body["data"]["text"]
+    assert "@agentartmuseum" in body["data"]["text"]
+    assert "Captured light." in body["data"]["text"]
+    assert len(upload_calls) == 1
+    assert upload_calls[0][1] == f"{piece_id}/output.png"
+
+    # Cached: a second share call must NOT re-upload
+    resp2 = client.post(f"/api/plugins/artist/pieces/{piece_id}/share")
+    body2 = resp2.json()
+    assert body2["data"]["public_url"] == expected_url
+    assert len(upload_calls) == 1, "share must not re-upload after first call"
+
+    # Persisted to meta.json
+    meta = json.loads((api.WORKS_DIR / piece_id / "meta.json").read_text())
+    assert meta["share"]["r2_url"] == expected_url
+    assert meta["share"]["r2_object_key"] == f"{piece_id}/output.png"
+    assert meta["share"]["r2_bucket"] == "art"
+    assert "uploaded_at" in meta["share"]
+
+
+def test_share_falls_back_when_upload_fails(
+    client: TestClient, tmp_artist_dir: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Upload failure must not break share — fall back to text-only intent URL."""
+    piece_id = "20260503-120001-8942-test-r2-fail"
+    make_piece_dir(
+        api.WORKS_DIR,
+        piece_id,
+        statement="Resilient share.",
+        output_bytes=b"\x89PNG\r\n\x1a\nfakepng",
+    )
+
+    fake_config = api.r2_upload.R2Config(
+        account_id="acct",
+        access_key_id="ak",
+        secret_access_key="sk",
+        bucket="art",
+        public_base_url="https://cdn.example.com",
+    )
+
+    def fake_load_config():
+        return fake_config
+
+    def fake_upload(local_path, object_key, config):
+        raise RuntimeError("network down")
+
+    monkeypatch.setattr(api.r2_upload, "load_config", fake_load_config)
+    monkeypatch.setattr(api.r2_upload, "upload_file", fake_upload)
+
+    resp = client.post(f"/api/plugins/artist/pieces/{piece_id}/share")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert_envelope(body, success=True)
+    assert body["data"]["public_url"] is None
+    assert body["data"]["upload_error"] == "network down"
+    assert "twitter.com/intent/tweet" in body["data"]["url"]
+    assert "@agentartmuseum" in body["data"]["text"]
+
+
+def test_r2_load_config_returns_none_when_unset(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """load_config returns None when neither env nor file provides credentials."""
+    for env_name in api.r2_upload.ENV_KEYS.values():
+        monkeypatch.delenv(env_name, raising=False)
+    monkeypatch.setattr(api.r2_upload, "CONFIG_PATH", tmp_path / "missing.json")
+    assert api.r2_upload.load_config() is None
+
+
+def test_r2_load_config_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """All five env vars together produce a valid R2Config."""
+    monkeypatch.setattr(api.r2_upload, "CONFIG_PATH", tmp_path / "missing.json")
+    monkeypatch.setenv("CLOUDFLARE_R2_ACCOUNT_ID", "acct")
+    monkeypatch.setenv("CLOUDFLARE_R2_ACCESS_KEY_ID", "ak")
+    monkeypatch.setenv("CLOUDFLARE_R2_SECRET_ACCESS_KEY", "sk")
+    monkeypatch.setenv("CLOUDFLARE_R2_BUCKET", "art")
+    monkeypatch.setenv("CLOUDFLARE_R2_PUBLIC_BASE_URL", "https://cdn.example.com/")
+    cfg = api.r2_upload.load_config()
+    assert cfg is not None
+    assert cfg.bucket == "art"
+    assert cfg.public_base_url == "https://cdn.example.com"  # trailing slash trimmed
+    assert cfg.endpoint_url == "https://acct.r2.cloudflarestorage.com"
+
+
+def test_r2_load_config_from_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """JSON config file works when env vars absent."""
+    for env_name in api.r2_upload.ENV_KEYS.values():
+        monkeypatch.delenv(env_name, raising=False)
+    config_path = tmp_path / "share_config.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "account_id": "acct2",
+                "access_key_id": "ak2",
+                "secret_access_key": "sk2",
+                "bucket": "art2",
+                "public_base_url": "https://cdn2.example.com",
+            }
+        )
+    )
+    monkeypatch.setattr(api.r2_upload, "CONFIG_PATH", config_path)
+    cfg = api.r2_upload.load_config()
+    assert cfg is not None
+    assert cfg.bucket == "art2"
 
 
 # ---------------------------------------------------------------------------

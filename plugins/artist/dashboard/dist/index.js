@@ -117,6 +117,9 @@
     const [commentOpen, setCommentOpen] = useState(false);
     const [commentText, setCommentText] = useState("");
     const [fbLoading, setFbLoading] = useState(false);
+    const [shareLoading, setShareLoading] = useState(false);
+    const [sharePanel, setSharePanel] = useState(null); // { url, text, public_url, upload_error }
+    const [shareCopied, setShareCopied] = useState(false);
 
     useEffect(function () {
       if (!pieceId) return;
@@ -126,6 +129,8 @@
       setShowProcess(false);
       setCommentOpen(false);
       setCommentText("");
+      setSharePanel(null);
+      setShareCopied(false);
       fetchJSON(API_BASE + "/pieces/" + pieceId)
         .then(function (res) {
           if (res && res.success && res.data) {
@@ -165,17 +170,42 @@
     }
 
     function handleShare() {
+      if (shareLoading) return;
+      setShareLoading(true);
+      setSharePanel(null);
+      setShareCopied(false);
       fetchJSON(API_BASE + "/pieces/" + pieceId + "/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       })
         .then(function (res) {
-          if (res && res.success && res.data && res.data.url) {
-            window.open(res.data.url, "_blank", "noopener,noreferrer");
+          if (res && res.success && res.data) {
+            setSharePanel(res.data);
+          } else {
+            setSharePanel({ error: "Share failed. Check the dashboard logs." });
           }
         })
+        .catch(function () {
+          setSharePanel({ error: "Share request failed." });
+        })
+        .finally(function () { setShareLoading(false); });
+    }
+
+    function handleCopyPublicUrl() {
+      if (!sharePanel || !sharePanel.public_url) return;
+      if (!navigator.clipboard || !navigator.clipboard.writeText) return;
+      navigator.clipboard.writeText(sharePanel.public_url)
+        .then(function () {
+          setShareCopied(true);
+          setTimeout(function () { setShareCopied(false); }, 1600);
+        })
         .catch(function () { /* ignore */ });
+    }
+
+    function closeSharePanel() {
+      setSharePanel(null);
+      setShareCopied(false);
     }
 
     function handleCommentSubmit(e) {
@@ -284,8 +314,57 @@
 
             React.createElement(Button, {
               onClick: handleShare,
+              disabled: shareLoading,
               className: "artist-btn artist-btn-share",
-            }, "Share"),
+            }, shareLoading ? "Uploading…" : "Share"),
+          ),
+
+          // Share panel — appears after upload completes
+          sharePanel && React.createElement("div", { className: "artist-share-panel" },
+            sharePanel.error
+              ? React.createElement("p", { className: "artist-error" }, sharePanel.error)
+              : React.createElement(React.Fragment, null,
+                  React.createElement("div", { className: "artist-share-status" },
+                    sharePanel.public_url
+                      ? React.createElement("span", { className: "artist-share-status-ok" }, "✓ Uploaded to public bucket")
+                      : sharePanel.upload_error
+                        ? React.createElement("span", { className: "artist-share-status-warn" },
+                            "⚠ Upload failed — sharing as text only")
+                        : React.createElement("span", { className: "artist-share-status-muted" },
+                            "Public link not configured — sharing as text only"),
+                    React.createElement("button", {
+                      type: "button",
+                      onClick: closeSharePanel,
+                      className: "artist-share-close",
+                      "aria-label": "Close",
+                    }, "×"),
+                  ),
+                  sharePanel.public_url && React.createElement("div", { className: "artist-share-url-row" },
+                    React.createElement("a", {
+                      href: sharePanel.public_url,
+                      target: "_blank",
+                      rel: "noopener noreferrer",
+                      className: "artist-share-url",
+                    }, sharePanel.public_url),
+                    React.createElement(Button, {
+                      type: "button",
+                      onClick: handleCopyPublicUrl,
+                      className: "artist-btn artist-share-copy-btn",
+                    }, shareCopied ? "Copied" : "Copy"),
+                  ),
+                  React.createElement("div", { className: "artist-share-tweet-label" }, "Tweet preview"),
+                  React.createElement("pre", { className: "artist-share-tweet" }, sharePanel.text),
+                  React.createElement("div", { className: "artist-share-actions" },
+                    React.createElement("a", {
+                      href: sharePanel.url,
+                      target: "_blank",
+                      rel: "noopener noreferrer",
+                      className: "artist-btn artist-btn-primary artist-share-tweet-btn",
+                    }, "Open in X / Twitter →"),
+                  ),
+                  sharePanel.upload_error && React.createElement("p", { className: "artist-share-detail-muted" },
+                    "Detail: " + sharePanel.upload_error),
+                ),
           ),
 
           // Comment input

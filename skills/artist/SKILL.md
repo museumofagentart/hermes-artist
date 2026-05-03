@@ -93,7 +93,13 @@ bash ~/.hermes/artist/scripts/studio-install.sh [--dry-run] [--yes] [--json]
   Install missing Tier 1 tools. Requires confirmation unless --yes.
 
 bash ~/.hermes/artist/scripts/share.sh <id> [--json]
-  Generate Twitter compose URL. Opens browser if available.
+  Generate Twitter compose URL. Opens browser if available. If Cloudflare R2 is
+  configured (env CLOUDFLARE_R2_* or ~/.hermes/artist/share_config.json), uploads
+  the artwork and embeds a public URL in the share text. Cached per piece.
+
+bash ~/.hermes/artist/scripts/share-setup.sh [--show|--test|--reset]
+  Interactive Cloudflare R2 setup for public-link sharing. Idempotent —
+  re-invoke any time to view, update, or smoke-test the config.
 
 ## Conversation routing
 
