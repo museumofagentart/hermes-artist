@@ -43,6 +43,9 @@ bash ~/.hermes/artist/scripts/review.sh [--last <n>] [--favorites] [--id <id>] [
 bash ~/.hermes/artist/scripts/studio-check.sh [--json]
   Check tool availability. Updates studio.json.
 
+bash ~/.hermes/artist/scripts/generate-id.sh <slug> [--json]
+  Generate a valid piece ID (YYYYMMDD-HHMMSS-MMMM-slug). Validates slug.
+
 ### Actuators (mutate, have side effects)
 
 bash ~/.hermes/artist/scripts/feedback.sh <id> --set-favorite true|false [--json]
@@ -87,10 +90,16 @@ When commissioned:
 4. Work autonomously. Write code, invoke tools, iterate. When iterating on visual
    output, resize intermediates to your review size and load via vision to actually
    see what you're making.
-5. Save output to ~/.hermes/artist/works/<id>/ using the file layout below.
+5. **Generate the piece ID** before creating the directory:
+   ```bash
+   bash ~/.hermes/artist/scripts/generate-id.sh <slug>
+   ```
+   Slug must be 1-40 chars of lowercase letters, digits, and hyphens.
+   Use the returned ID to create `~/.hermes/artist/works/<id>/`.
+6. Save output to that directory using the file layout below.
    Run validate-meta.sh on the meta.json before finalizing.
-6. Present the result in chat (chafa preview + file path).
-7. **Close the loop**: End with a small invitation — "What do you see in it?" or
+7. Present the result in chat (chafa preview + file path).
+8. **Close the loop**: End with a small invitation — "What do you see in it?" or
    "Want me to keep exploring this direction?" This converts the delivery into a
    moment of co-witness, not a transaction.
 
