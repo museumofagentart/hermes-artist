@@ -1,6 +1,6 @@
 ---
 name: artist
-description: "Creative art skill — autonomous artwork commissions, artistic perspective development."
+description: "Create art on commission — generate images, video, or audio pieces with artistic perspective. Use for any 'make/create/commission a piece/artwork/image' request."
 version: 1.0.0
 metadata:
   hermes:
