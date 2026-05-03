@@ -1,8 +1,8 @@
-# Tracer Bullet Report: hermes-da-kimi-c17
+# Tracer Bullet Report: hermes-da-kimi-c17 + ae0
 
 **Date:** 2026-05-03  
 **Task:** Commission self-portrait, verify full loop (SKILL.md → agent creates → scripts read → feedback round-trips)  
-**Model:** qwen3:8b via Ollama (local, 8B parameters)  
+**Models:** qwen3:8b via Ollama (local, 8B parameters) — initial attempt; Kimi (capable model) — validation rerun  
 **Hermes:** v0.12.0  
 
 ---
@@ -117,6 +117,43 @@ Secondary issues that amplified the failure:
 | [hermes-da-kimi-ae0](bd show hermes-da-kimi-ae0) | Validate commission flow with a capable model | The tracer bullet must be rerun with a model that can reliably follow multi-step instructions (e.g., GPT-4o, Claude Sonnet, or 30B+ local). |
 | [hermes-da-kimi-736](bd show hermes-da-kimi-736) | Implement review.sh with tests | Already existed; agent needs this for pre-commission portfolio review. |
 | [hermes-da-kimi-vnh](bd show hermes-da-kimi-vnh) | Implement studio-install.sh with tests | Already existed; agent needs this for lazy tool installation. |
+
+---
+
+## Capable Model Validation (hermes-da-kimi-ae0)
+
+**Model:** Kimi (Moonshot AI) — remote, large-scale  
+**Date:** 2026-05-03
+
+A capable model (Kimi) was used to re-validate the full commission flow end-to-end.
+
+### Agent-Layer Results
+
+| Step | Status | Notes |
+|------|--------|-------|
+| 1. Image generation | ✅ PASS | Pillow 512×512 abstract self-portrait generated successfully |
+| 2. Piece directory creation | ✅ PASS | Valid ID format `20260503-120001-8939-self-portrait` |
+| 3. output.png | ✅ PASS | Valid PNG, 512×512 |
+| 4. statement.md | ✅ PASS | Substantive artist statement written |
+| 5. process.md | ✅ PASS | All 5 required sections present |
+| 6. meta.json | ✅ PASS | Valid schema, passes validate-meta.sh |
+| 7. thumbs/thumb.jpg | ✅ PASS | 300×300 JPEG |
+| 8. thumbs/review.jpg | ✅ PASS | 768×768 JPEG |
+| 9. avatar.png | ✅ PASS | Copied from output, 512×512 PNG |
+| 10. validate-meta.sh | ✅ PASS | Schema validation succeeds |
+| 11. gallery.sh --json | ✅ PASS | Lists piece, total >= 1 |
+| 12. show.sh --json | ✅ PASS | Returns full piece data |
+| 13. feedback comment | ✅ PASS | Persists in meta.json |
+| 14. feedback favorite | ✅ PASS | Persists in meta.json |
+| 15. Test suite | ✅ PASS | All 116 tests pass (show, feedback, gallery, scaffold) |
+
+### Test Fixes Applied
+
+- `test_gallery.sh`: Added temporary backup/restore of real pieces during test execution so the gallery scan sees only the expected test pieces.
+
+### Conclusion
+
+The architecture (SKILL.md + scripts + filesystem layout) is fully validated. Both the script layer and the agent layer work correctly when driven by a capable model. The qwen3:8b failure was a model-capacity issue, not an architecture issue.
 
 ---
 

@@ -10,12 +10,26 @@ echo ""
 
 GALLERY_SCRIPT="$REPO_DIR/artist/scripts/gallery.sh"
 
-# Temporarily move fixture piece so tests run against a clean works dir
+# Temporarily move all non-test pieces so tests run against a clean works dir
 FIXTURE_DIR="$WORKS_DIR/00000000-000000-0000-test-fixture"
 FIXTURE_BACKUP="$WORKS_DIR/.00000000-000000-0000-test-fixture-backup"
 if [[ -d "$FIXTURE_DIR" ]]; then
   mv "$FIXTURE_DIR" "$FIXTURE_BACKUP"
 fi
+
+# Backup any real pieces (not test pieces, not the fixture)
+REAL_BACKUPS=()
+for d in "$WORKS_DIR"/*; do
+  if [[ -d "$d" ]]; then
+    base=$(basename "$d")
+    # Skip test pieces and hidden backups
+    if [[ "$base" != *-test-piece* && "$base" != .* ]]; then
+      backup="$WORKS_DIR/.$base-backup"
+      mv "$d" "$backup"
+      REAL_BACKUPS+=("$base")
+    fi
+  fi
+done
 
 # ── Empty gallery ──
 echo "Empty gallery:"
@@ -163,6 +177,14 @@ rm -rf "$BAD_DIR"
 
 # ── Teardown test pieces ──
 teardown_test_pieces
+
+# Restore real pieces
+for base in "${REAL_BACKUPS[@]}"; do
+  backup="$WORKS_DIR/.$base-backup"
+  if [[ -d "$backup" ]]; then
+    mv "$backup" "$WORKS_DIR/$base"
+  fi
+done
 
 # Restore fixture piece
 if [[ -d "$FIXTURE_BACKUP" ]]; then
