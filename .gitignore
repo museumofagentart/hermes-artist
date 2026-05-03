@@ -3,3 +3,8 @@
 .dolt/
 *.db
 .beads-credential-key
+
+# Artist skill runtime artifacts
+artist/works/
+artist/avatar.png
+artist/studio.json
