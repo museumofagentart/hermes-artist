@@ -12,28 +12,32 @@ Installed. Hermes will find the artist skill on next session.
 ──────────────────────────────────────────────────────────────────────
   How to talk to your artist
 ──────────────────────────────────────────────────────────────────────
-  Use these cues so hermes routes to the artist skill (not a generic
-  image-gen tool). The skill's vocabulary is small and intentional.
+  YOU are the patron. The agent is the artist.
+  The patron commissions; the artist fulfills.
 
-  Commission a piece:
+  Address the artist directly using the relationship's vocabulary —
+  that's how hermes knows to load this skill instead of a generic
+  image-gen tool.
+
+  To COMMISSION (you, the patron):
     "Commission a piece about <subject>."
     "Make me an artwork about <subject>."
     "I'd like to commission something about <subject>."
 
-  Reference a prior piece (revision, companion, response):
-    "Make a companion to <piece title or id>."
-    "Do a revision of <title> with <change>."
+  To reference a PRIOR PIECE (revision, companion, response):
+    "Make a companion piece to <title or id>."
+    "Commission a revision of <title> with <change>."
 
-  Have an aesthetic conversation:
+  To have an AESTHETIC CONVERSATION (perspective mode):
     "As an artist, what have you been thinking about?"
     "Tell me about your studio / your work / your gallery."
-    "What's on your mind lately?" (after 'as an artist')
 
-  Give patron feedback:
+  To give PATRON FEEDBACK:
     "I love how <observation>." → becomes a comment on the piece
     "This is a favorite." → flips meta.json favorite flag
 
-  Keywords that anchor routing: artist, patron, commission, artistic,
-  studio, gallery, piece, artwork. Use at least one per request.
+  Anchor vocabulary (use at least one): commission, artist, patron,
+  studio, gallery, piece, artwork. Generic phrasing like "create an
+  image" deliberately routes elsewhere.
 ──────────────────────────────────────────────────────────────────────
 EOF
