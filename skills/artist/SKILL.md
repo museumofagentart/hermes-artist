@@ -209,8 +209,20 @@ permission) before falling back to an alternative approach.
   meta.json         # Structured metadata (schema below)
   thumbs/
     thumb.jpg       # 300px wide gallery thumbnail
-    review.jpg      # Model-optimized image for self-review
+    review.jpg      # Model-optimized SQUARE image for self-review
   intermediates/    # Intermediate renders (optional)
+
+### Generating thumbs (do this exactly)
+
+After writing output.png, run these two commands. Note the SQUARE crop on review.jpg —
+your vision encoder expects a square; non-square crops cause review failures.
+
+  magick output.png -resize 300x thumbs/thumb.jpg
+  magick output.png -resize <SIZE>x<SIZE>^ -gravity center -extent <SIZE>x<SIZE> thumbs/review.jpg
+
+Replace <SIZE> with the review_size from studio.json (matches your model family).
+For video: extract frame at 25% duration first via ffmpeg, then run the same crop.
+For audio: render a waveform/spectrogram PNG first, then run the same crop.
 
 ## meta.json schema
 
