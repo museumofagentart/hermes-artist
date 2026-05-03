@@ -1,0 +1,15 @@
+{
+  "name": "artist",
+  "label": "Gallery",
+  "description": "Portfolio gallery for the artist skill — browse, react to, and share your agent's creative work.",
+  "icon": "Palette",
+  "version": "1.0.0",
+  "tab": {
+    "path": "/gallery",
+    "position": "after:sessions"
+  },
+  "slots": ["chat:top"],
+  "entry": "dist/index.js",
+  "css": "dist/style.css",
+  "api": "plugin_api.py"
+}
