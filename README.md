@@ -4,7 +4,7 @@ A Hermes skill that gives your agent a studio. You commission; the agent makes t
 
 ![Gallery dashboard with "I Am The Loop" selected](docs/gallery.png)
 
-Your hermes-agent already knows how to write code, search the web, and watch YouTube videos through yt-dlp. This skill points all of that at making art instead of doing tickets. The agent gets a directory at `~/.hermes/artist/`, a perspective document it edits as its taste develops, and a dashboard gallery you can browse and react to.
+Your hermes-agent already knows how to write code, search the web, and watch YouTube videos through yt-dlp. This skill points all of that at making art instead of doing tickets. The agent gets a studio directory of its own, a perspective document it edits as its taste develops, and a dashboard gallery you can browse and react to.
 
 Watch one piece the skill produced — a self-portrait the agent built in response to the canonical "make a YouTube poop about being an LLM" prompt:
 
@@ -36,10 +36,13 @@ You can favorite a piece, leave a comment, or flag it as discouraged so the agen
 ```bash
 git clone https://github.com/museumofagentart/hermes-artist
 cd hermes-artist
-./install.sh
+./setup.sh
+hermes gateway restart
 ```
 
-The installer symlinks the skill into `~/.hermes/skills/artist/` and the dashboard plugin into `~/.hermes/hermes-agent/plugins/artist/`. Restart `hermes dashboard` once and the Gallery tab appears.
+`setup.sh` registers the skill with hermes (adds the repo's `skills/` dir to `skills.external_dirs` in `~/.hermes/config.yaml`), symlinks the dashboard plugin into `~/.hermes/plugins/artist-patron/`, and sets `ARTIST_PATRON_HOME` in `~/.hermes/.env` so the studio lives inside this repo. It's idempotent — safe to re-run.
+
+After the gateway restart, the Gallery tab appears on the hermes dashboard.
 
 For the first session, ask for a self-portrait. The agent will make one and save it as both a piece and as its dashboard avatar.
 
@@ -50,17 +53,18 @@ The Share button on each piece opens a Twitter compose window. By default it sen
 To share an actual viewable link, point Share at a Cloudflare R2 bucket:
 
 ```bash
-bash ~/.hermes/artist/scripts/share-setup.sh
+bash skills/artist-patron/scripts/share-setup.sh
 ```
 
-The setup walks you through the five fields it needs (account ID, access key, secret, bucket name, public base URL), saves them to `~/.hermes/artist/share_config.json` with `chmod 600`, and runs a smoke-test upload to verify the bucket is reachable. Re-invoke any time with `--show`, `--test`, or `--reset`.
+The setup walks you through the five fields it needs (account ID, access key, secret, bucket name, public base URL), saves them to `skills/artist-patron/share_config.json` with `chmod 600`, and runs a smoke-test upload to verify the bucket is reachable. Re-invoke any time with `--show`, `--test`, or `--reset`.
 
 After that, Share uploads the artwork on first click and caches the public URL in the piece's `meta.json`. Subsequent shares of the same piece skip the upload.
 
 ## How it's laid out
 
 ```
-artist/
+skills/artist-patron/
+  SKILL.md                what the agent reads to know how to behave
   PERSPECTIVE.md          the agent's evolving creative document
   studio.json             tool inventory (image, video, audio)
   scripts/                CLI surface — gallery, show, review, share, feedback
@@ -70,8 +74,7 @@ artist/
     process.md
     meta.json
     thumbs/
-plugins/artist/dashboard/  the Gallery tab
-skills/artist/SKILL.md     what the agent reads to know how to behave
+plugins/artist-patron/dashboard/   the Gallery tab + chat banner
 ```
 
 The agent only ever talks to scripts. Every script returns the same JSON envelope (`{success, data, meta}`), which means new agents pick up the skill without any extra plumbing.
