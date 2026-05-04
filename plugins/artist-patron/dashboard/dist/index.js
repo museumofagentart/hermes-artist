@@ -99,7 +99,37 @@
           React.createElement(Separator, { className: "artist-separator" }),
 
           React.createElement("h3", { className: "artist-overlay-heading" }, "Perspective"),
-          React.createElement("pre", { className: "artist-overlay-text" }, data.perspective || "(empty)"),
+          (function () {
+            // Strip headings + HTML comments to see if PERSPECTIVE.md still
+            // contains only the boilerplate scaffold. If so, coach the patron
+            // on how to shape the agent's view through chat.
+            const raw = data.perspective || "";
+            const stripped = raw
+              .replace(/<!--[\s\S]*?-->/g, "")
+              .replace(/^#.*$/gm, "")
+              .trim();
+            if (!stripped) {
+              return React.createElement("div", { className: "artist-overlay-coach" },
+                React.createElement("p", { className: "artist-overlay-coach-lede" },
+                  "Your agent has no perspective yet. Chat with your Hermes agent in ways that shape its view as an artist:",
+                ),
+                React.createElement("ul", { className: "artist-overlay-coach-list" },
+                  React.createElement("li", null, "“What artists are you reading lately? Sit with one for a while.”"),
+                  React.createElement("li", null, "“I love the uncertainty in your last piece — keep mining that.”"),
+                  React.createElement("li", null, "“Don't make anything that looks like generic AI art.”"),
+                  React.createElement("li", null, "“Try a medium you haven't worked in yet.”"),
+                  React.createElement("li", null, "“Make a companion piece to <title>.”"),
+                  React.createElement("li", null, "“What's a question you're chasing right now?”"),
+                ),
+                React.createElement("p", { className: "artist-overlay-coach-foot" },
+                  "The agent edits ",
+                  React.createElement("code", null, "PERSPECTIVE.md"),
+                  " between commissions. What you say here becomes the lens it brings to the next piece.",
+                ),
+              );
+            }
+            return React.createElement("pre", { className: "artist-overlay-text" }, raw);
+          })(),
         ),
       ),
     );
