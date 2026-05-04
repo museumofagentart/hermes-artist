@@ -228,6 +228,20 @@
   letter-spacing: 0.05em;
 }
 
+/* Commission — the seed prompt that triggered the piece */
+.artist-commission {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-muted-foreground);
+  background: color-mix(in srgb, var(--midground-base) 4%, var(--background-base));
+  border-left: 3px solid var(--color-border);
+  padding: calc(0.25rem * var(--theme-spacing-mul, 1) * 3);
+  margin: 0;
+  font-style: italic;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
 /* Statement / process text */
 .artist-statement,
 .artist-process {

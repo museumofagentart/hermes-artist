@@ -277,6 +277,13 @@
             React.createElement("span", { className: "artist-meta-value" }, detail.meta.medium || "—"),
           ),
 
+          // Commission — the seed prompt that triggered the piece
+          detail.meta.seed && React.createElement(React.Fragment, null,
+            React.createElement(Separator, { className: "artist-separator" }),
+            React.createElement("h4", { className: "artist-section-heading" }, "Commission"),
+            React.createElement("blockquote", { className: "artist-commission" }, detail.meta.seed),
+          ),
+
           // Statement
           React.createElement(Separator, { className: "artist-separator" }),
           React.createElement("h4", { className: "artist-section-heading" }, "Statement"),

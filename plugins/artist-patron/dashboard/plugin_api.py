@@ -452,6 +452,10 @@ async def gallery(limit: int = 20, offset: int = 0, favorites: bool = False):
                     meta.get("id"),
                 )
                 continue
+            # Hide pieces flagged as test fixtures (used by automated tests,
+            # not meant to surface in the gallery UI).
+            if meta.get("test_fixture"):
+                continue
             feedback = meta.get("patron_feedback", {})
             if favorites and not feedback.get("favorite", False):
                 continue
