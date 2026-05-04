@@ -1,8 +1,0 @@
-{
-  "_comment": "Copy to artist/share_config.json (symlinked as ~/.hermes/artist/share_config.json) and chmod 600. share_config.json is gitignored. Env vars CLOUDFLARE_R2_* override these. public_base_url is the bucket's public URL (pub-xxxxx.r2.dev or your custom domain).",
-  "account_id": "your-cloudflare-account-id",
-  "access_key_id": "your-r2-access-key-id",
-  "secret_access_key": "your-r2-secret-access-key",
-  "bucket": "your-bucket-name",
-  "public_base_url": "https://pub-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.r2.dev"
-}

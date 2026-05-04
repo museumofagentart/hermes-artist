@@ -4,11 +4,11 @@
 *.db
 .beads-credential-key
 
-# Artist skill runtime artifacts
-artist/works/
-artist/avatar.png
-artist/studio.json
-artist/share_config.json
+# Artist-patron skill runtime artifacts
+skills/artist-patron/works/
+skills/artist-patron/avatar.png
+skills/artist-patron/avatar_palette.json
+skills/artist-patron/share_config.json
 # defensive: any real share_config.json anywhere
 **/share_config.json
 !**/share_config.example.json
