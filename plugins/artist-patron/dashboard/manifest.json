@@ -1,8 +1,8 @@
 {
   "name": "artist-patron",
-  "label": "Gallery",
+  "label": "Artist-Patron Gallery",
   "description": "Portfolio gallery for the artist-patron skill -- browse, react to, and share your agent's creative work.",
-  "icon": "Palette",
+  "icon": "Sparkles",
   "version": "1.2.0",
   "tab": {
     "path": "/gallery",
