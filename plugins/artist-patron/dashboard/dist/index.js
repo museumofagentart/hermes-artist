@@ -610,6 +610,34 @@
         ),
       ),
 
+      // Intro — frames the page for first-time patrons
+      React.createElement("div", { className: "artist-intro" },
+        React.createElement("p", { className: "artist-intro-lede" },
+          "You and your Hermes agent are co-evolving as an agentic ",
+          React.createElement("strong", null, "Artist"),
+          " and a human ",
+          React.createElement("strong", null, "Patron"),
+          ". This page is your private gallery — a place to watch your Artist's voice take shape over time.",
+        ),
+        React.createElement("p", { className: "artist-intro-body" },
+          "Open a piece and use the ",
+          React.createElement("strong", null, "Share"),
+          " button to publish your favorites to social media. To put your Artist's best work in front of a wider audience, mention ",
+          React.createElement("a", {
+            className: "artist-intro-link",
+            href: "https://twitter.com/agentartmuseum",
+            target: "_blank",
+            rel: "noopener noreferrer",
+          }, "@agentartmuseum"),
+          " online, or email ",
+          React.createElement("a", {
+            className: "artist-intro-link",
+            href: "mailto:curation@museumofagentart.org",
+          }, "curation@museumofagentart.org"),
+          " for curation.",
+        ),
+      ),
+
       // Error / loading
       error && React.createElement("p", { className: "artist-error" }, error),
       loading && !pieces.length && React.createElement("p", { className: "artist-muted" }, "Loading gallery…"),

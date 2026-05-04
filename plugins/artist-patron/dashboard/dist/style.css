@@ -89,6 +89,39 @@
   font-family: var(--theme-font-mono);
 }
 
+/* Intro — frames the page for first-time patrons */
+.artist-intro {
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.25rem * var(--theme-spacing-mul, 1) * 2);
+  padding: calc(0.25rem * var(--theme-spacing-mul, 1) * 4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--midground-base) 4%, var(--background-base));
+  font-family: var(--theme-font-sans);
+}
+
+.artist-intro-lede,
+.artist-intro-body {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-foreground);
+}
+
+.artist-intro-body {
+  color: var(--color-muted-foreground);
+}
+
+.artist-intro-link {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.artist-intro-link:hover {
+  text-decoration: none;
+}
+
 /* Gallery grid */
 .artist-grid {
   display: grid;
