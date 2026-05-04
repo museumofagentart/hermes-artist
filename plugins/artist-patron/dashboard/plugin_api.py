@@ -474,9 +474,51 @@ async def gallery(limit: int = 20, offset: int = 0, favorites: bool = False):
     )
 
 
+CODE_EXTENSIONS = {
+    ".py", ".sh", ".js", ".ts", ".tsx", ".jsx", ".rb", ".go", ".rs",
+    ".c", ".h", ".cpp", ".hpp", ".lua", ".pl", ".php", ".r", ".swift",
+    ".java", ".kt", ".scala", ".clj", ".ex", ".exs", ".ml", ".hs", ".sql",
+    ".html", ".css", ".scss", ".vue", ".svelte",
+}
+MAX_CODE_FILE_BYTES = 200_000  # 200KB per file cap
+
+
+def _collect_code_files(piece_dir: Path) -> list[dict]:
+    """Read source files the agent wrote at the top level of the piece dir.
+
+    Only top-level files (skips intermediates/, thumbs/, etc.). Filtered by
+    extension. Each file capped at MAX_CODE_FILE_BYTES; oversized files
+    return a truncation marker instead of the full body.
+    """
+    files: list[dict] = []
+    for entry in sorted(piece_dir.iterdir()):
+        if not entry.is_file():
+            continue
+        if entry.suffix.lower() not in CODE_EXTENSIONS:
+            continue
+        try:
+            size = entry.stat().st_size
+            if size > MAX_CODE_FILE_BYTES:
+                content = (
+                    entry.read_text(encoding="utf-8", errors="replace")[:MAX_CODE_FILE_BYTES]
+                    + f"\n\n… [truncated, file is {size} bytes total]"
+                )
+            else:
+                content = entry.read_text(encoding="utf-8", errors="replace")
+        except OSError as exc:
+            log.warning("could not read code file %s: %s", entry, exc)
+            continue
+        files.append({
+            "name": entry.name,
+            "size": size,
+            "content": content,
+        })
+    return files
+
+
 @router.get("/pieces/{piece_id}")
 async def get_piece(piece_id: str):
-    """Full piece detail: meta + statement + process log."""
+    """Full piece detail: meta + statement + process log + agent-written code."""
     piece_dir = _validate_piece_id(piece_id)
     meta = _read_meta(piece_dir)
     if meta is None:
@@ -487,12 +529,14 @@ async def get_piece(piece_id: str):
         )
     statement = _read_text(piece_dir / "statement.md")
     process = _read_text(piece_dir / "process.md")
+    code = _collect_code_files(piece_dir)
     return _envelope(
         True,
         {
             "meta": meta,
             "statement": statement,
             "process": process,
+            "code": code,
         },
     )
 

@@ -114,6 +114,7 @@
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [showProcess, setShowProcess] = useState(false);
+    const [showCode, setShowCode] = useState(false);
     const [commentOpen, setCommentOpen] = useState(false);
     const [commentText, setCommentText] = useState("");
     const [fbLoading, setFbLoading] = useState(false);
@@ -127,6 +128,7 @@
       setError(null);
       setDetail(null);
       setShowProcess(false);
+      setShowCode(false);
       setCommentOpen(false);
       setCommentText("");
       setSharePanel(null);
@@ -422,6 +424,30 @@
             showProcess ? "▼ Process log" : "▶ Process log",
           ),
           showProcess && React.createElement("pre", { className: "artist-process" }, detail.process || "(no process log)"),
+
+          // Code — source files the agent wrote for this piece
+          detail.code && detail.code.length > 0 && React.createElement(React.Fragment, null,
+            React.createElement(Separator, { className: "artist-separator" }),
+            React.createElement("button", {
+              className: "artist-process-toggle",
+              onClick: function () { setShowCode(function (v) { return !v; }); },
+            },
+              showCode
+                ? "▼ Code (" + detail.code.length + " file" + (detail.code.length === 1 ? "" : "s") + ")"
+                : "▶ Code (" + detail.code.length + " file" + (detail.code.length === 1 ? "" : "s") + ")",
+            ),
+            showCode && React.createElement("div", { className: "artist-code-files" },
+              detail.code.map(function (f) {
+                return React.createElement("div", { key: f.name, className: "artist-code-file" },
+                  React.createElement("div", { className: "artist-code-filename" },
+                    React.createElement("span", null, f.name),
+                    React.createElement("span", { className: "artist-code-size" }, f.size + " B"),
+                  ),
+                  React.createElement("pre", { className: "artist-code-body" }, f.content),
+                );
+              }),
+            ),
+          ),
         ),
       ),
     );
