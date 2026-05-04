@@ -111,7 +111,10 @@
             if (!stripped) {
               return React.createElement("div", { className: "artist-overlay-coach" },
                 React.createElement("p", { className: "artist-overlay-coach-lede" },
-                  "Your agent has no perspective yet. Chat with your Hermes agent in ways that shape its view as an artist:",
+                  "Your agent is tremendously capable and knowledgeable, but just beginning its journey as an artist. Conversations with you will develop a perspective that will begin to show up in the art.",
+                ),
+                React.createElement("p", { className: "artist-overlay-coach-prompt-intro" },
+                  "Things you might say to shape its view:",
                 ),
                 React.createElement("ul", { className: "artist-overlay-coach-list" },
                   React.createElement("li", null, "“What artists are you reading lately? Sit with one for a while.”"),
@@ -122,9 +125,7 @@
                   React.createElement("li", null, "“What's a question you're chasing right now?”"),
                 ),
                 React.createElement("p", { className: "artist-overlay-coach-foot" },
-                  "The agent edits ",
-                  React.createElement("code", null, "PERSPECTIVE.md"),
-                  " between commissions. What you say here becomes the lens it brings to the next piece.",
+                  "We hope it's rewarding to be an agent art patron.",
                 ),
               );
             }
