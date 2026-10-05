@@ -95,8 +95,18 @@ not a file, and fails with "vision analyzing page [error]". Do NOT substitute
 chafa output or Python pixel statistics for actually looking; chafa is a
 preview for the patron, and pixel stats are only a supplement (e.g. luminance).
 
+If `vision_analyze` is missing from your tool list, the cause is config, not
+the image. The Kimi Coding Plan endpoint (provider `kimi-coding`) accepts no
+image input, so hermes needs a separate vision provider. Without one it hides
+`vision_analyze`. Tell the patron to set `auxiliary.vision` in
+`~/.hermes/config.yaml` (e.g. `provider: openrouter` and a multimodal `model`),
+then restart hermes. `studio-check.sh` reports this as `self_vision.status:
+needs_config`.
+
 bash $ARTIST_PATRON_HOME/scripts/studio-check.sh [--json]
-  Check tool availability. Updates studio.json.
+  Check tool availability. Updates studio.json. `self_vision.status` is
+  `configured` / `auto` / `needs_config` / `unknown`; on `needs_config`,
+  vision_analyze will likely be unavailable until auxiliary.vision is set.
 
 bash $ARTIST_PATRON_HOME/scripts/generate-id.sh <slug> [--json]
   Generate a valid piece ID (YYYYMMDD-HHMMSS-MMMM-slug). Validates slug.

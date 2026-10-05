@@ -180,6 +180,14 @@ class TestVisionSelfReview:
                 )
 
 
+    def test_documents_kimi_coding_plan_vision_gap(self, body):
+        # Kimi Coding Plan has no image input; vision_analyze needs an
+        # auxiliary.vision provider or it is hidden from the tool list.
+        assert "Kimi Coding Plan" in body
+        assert "auxiliary.vision" in body
+        assert "self_vision" in body, "SKILL.md must point at studio-check's self_vision field"
+
+
 class TestScriptSelfLocation:
     """Verify scripts derive correct paths from their own location,
     independent of symlinks or env vars."""
