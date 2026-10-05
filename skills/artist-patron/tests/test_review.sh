@@ -169,7 +169,8 @@ echo "Envelope meta shape:"
 OUTPUT=$(bash "$REVIEW_SCRIPT" --json)
 assert_eq "artist" "$(echo "$OUTPUT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["meta"]["source"])')" "meta source is artist"
 assert_eq "unknown" "$(echo "$OUTPUT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["meta"]["model_family"])')" "meta contains model_family"
-assert_eq "768" "$(echo "$OUTPUT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["meta"]["review_size"])')" "meta contains review_size"
+EXPECTED_REVIEW_SIZE=$(python3 -c "import json; print(json.load(open('$STUDIO_FILE')).get('review_size',768))")
+assert_eq "$EXPECTED_REVIEW_SIZE" "$(echo "$OUTPUT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["meta"]["review_size"])')" "meta review_size matches studio.json"
 
 # ── Test human-readable output ──
 echo ""
@@ -200,7 +201,7 @@ assert_eq "False" "$(echo "$OUTPUT" | python3 -c 'import json,sys; print(json.lo
 teardown_test_pieces
 
 # Restore real pieces
-for base in "${REAL_BACKUPS[@]}"; do
+for base in ${REAL_BACKUPS[@]+"${REAL_BACKUPS[@]}"}; do
   backup="$WORKS_DIR/.$base-backup"
   if [[ -d "$backup" ]]; then
     mv "$backup" "$WORKS_DIR/$base"
