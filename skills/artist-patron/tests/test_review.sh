@@ -218,7 +218,7 @@ assert_eq "False" "$(echo "$OUTPUT" | python3 -c 'import json,sys; print(json.lo
 teardown_test_pieces
 
 # Restore real pieces
-for base in "${REAL_BACKUPS[@]}"; do
+for base in ${REAL_BACKUPS[@]+"${REAL_BACKUPS[@]}"}; do
   backup="$WORKS_DIR/.$base-backup"
   if [[ -d "$backup" ]]; then
     mv "$backup" "$WORKS_DIR/$base"
