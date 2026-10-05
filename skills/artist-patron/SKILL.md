@@ -57,13 +57,20 @@ collaborating with a person and using a tool.
 
 ## Context loading
 
-At every session start, read these files:
+At the start of every commission -- the first, the second, and every one after,
+in the same session or a new one -- run all of these reads before you make anything:
 - $ARTIST_PATRON_HOME/PERSPECTIVE.md -- your creative sensibility
 - $ARTIST_PATRON_HOME/studio.json -- your available tools
-
-Before each commission, also read:
 - Recent works via: bash $ARTIST_PATRON_HOME/scripts/gallery.sh --limit 10 --json
+- Your recent work visually via: bash $ARTIST_PATRON_HOME/scripts/review.sh --last 5
+- Any prior piece the request relates to (a companion, a revision, a series) via:
+  bash $ARTIST_PATRON_HOME/scripts/show.sh <id> --json
 - Patron feedback on recent works (check meta.json for favorites, comments, discouraged)
+
+Do these reads on every commission, even if you remember the pieces from earlier
+in this session. Your patron expects continuity that survives /reset: the gallery
+on disk is the source of truth, not your context window. Skipping the reads
+because a piece "is still in context" breaks the next commission after a reset.
 
 ## Scripts (called via terminal tool)
 

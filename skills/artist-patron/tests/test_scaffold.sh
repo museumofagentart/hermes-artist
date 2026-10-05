@@ -72,6 +72,26 @@ for section in \
   fi
 done
 
+# ── Context loading fires on every commission, not once per session ──
+echo ""
+echo "SKILL.md context loading (per-commission reads):"
+CONTEXT_SECTION=$(awk '/^## Context loading/{f=1;next} /^## /{f=0} f' "$SKILL")
+for phrase in \
+  "every commission" \
+  "even if you remember" \
+  "/reset" \
+  "gallery.sh" \
+  "review.sh" \
+  "show.sh"; do
+  if grep -qF -- "$phrase" <<<"$CONTEXT_SECTION"; then
+    echo "  ✓ Context loading mentions '$phrase'"
+    PASSED=$((PASSED + 1))
+  else
+    echo "  ✗ Context loading missing '$phrase'"
+    FAILED=$((FAILED + 1))
+  fi
+done
+
 HEADER_COUNT_SKILL=$(grep -c '## ' "$SKILL" || true)
 if [[ "$HEADER_COUNT_SKILL" -ge 10 ]]; then
   echo "  ✓ SKILL.md has at least 10 headers ($HEADER_COUNT_SKILL)"
