@@ -159,6 +159,12 @@ for p in selected:
         'estimated_tokens': estimated_tokens,
         'favorite': favorite,
         'medium': p.get('medium', ''),
+        # Exact hermes tool call for self-review. browser_vision screenshots a
+        # browser page and errors on local files; vision_analyze loads them.
+        'vision_call': {
+            'tool': 'vision_analyze',
+            'image_url': os.path.abspath(review_image),
+        },
     }
     if not os.path.isfile(review_image):
         record['review_image_missing'] = True
@@ -200,4 +206,7 @@ for r in records:
     if r.get('review_image_missing'):
         img += ' [MISSING]'
     print(f'{pid:<40} {fav:<10} {toks:<8} {img}')
+print()
+print('To SEE an image: call vision_analyze(image_url=<Review Image path>, question=...).')
+print('Do NOT use browser_vision -- it screenshots a browser page, not a local file.')
 "
