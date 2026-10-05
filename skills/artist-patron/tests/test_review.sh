@@ -156,6 +156,24 @@ OUTPUT=$(bash "$REVIEW_SCRIPT" --id "$PIECE_ID2" --json)
 HAS_MISSING=$(echo "$OUTPUT" | python3 -c 'import json,sys; d=json.load(sys.stdin)["data"][0]; print("review_image_missing" in d)')
 assert_eq "False" "$HAS_MISSING" "existing review.jpg not flagged as missing"
 
+# ── Test vision hint: records tell the agent exactly how to load the image ──
+# Regression for hermes-da-kimi-6i6: agents called browser_vision (which
+# screenshots a browser page) instead of vision_analyze on the local file.
+echo ""
+echo "Vision hint for self-review:"
+OUTPUT=$(bash "$REVIEW_SCRIPT" --id "$PIECE_ID2" --json)
+assert_eq "vision_analyze" "$(echo "$OUTPUT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"][0]["vision_call"]["tool"])')" "vision_call names vision_analyze tool"
+assert_eq "$PIECE_DIR2/thumbs/review.jpg" "$(echo "$OUTPUT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"][0]["vision_call"]["image_url"])')" "vision_call image_url is the review.jpg path"
+assert_eq "True" "$(echo "$OUTPUT" | python3 -c 'import json,sys,os; print(os.path.isabs(json.load(sys.stdin)["data"][0]["vision_call"]["image_url"]))')" "vision_call image_url is absolute"
+OUTPUT_HUMAN=$(bash "$REVIEW_SCRIPT" --id "$PIECE_ID2" 2>/dev/null || true)
+if echo "$OUTPUT_HUMAN" | grep -q "vision_analyze"; then
+  echo "  ✓ human-readable output tells agent to use vision_analyze"
+  PASSED=$((PASSED + 1))
+else
+  echo "  ✗ human-readable output missing vision_analyze hint"
+  FAILED=$((FAILED + 1))
+fi
+
 # ── Test default behavior: last 5 + favorites ──
 echo ""
 echo "Default behavior (last 5 + favorites):"
