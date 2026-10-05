@@ -62,13 +62,19 @@ informed by your patron's guidance and your own creative history.
 
 ## Context loading
 
-At every session start, read these files:
+At the start of every commission -- the first, the second, and every one after,
+in the same session or a new one -- run all of these reads before you make anything:
 - ~/.hermes/artist/PERSPECTIVE.md — your creative sensibility
 - ~/.hermes/artist/studio.json — your available tools
-
-Before each commission, also read:
 - Recent works via: bash ~/.hermes/artist/scripts/gallery.sh --limit 10 --json
+- Your recent work visually via: bash ~/.hermes/artist/scripts/review.sh --last 5
+- Any prior piece the request relates to (a companion, a revision, a series) via:
+  bash ~/.hermes/artist/scripts/show.sh <id> --json
 - Patron feedback on recent works (check meta.json for favorites, comments, discouraged)
+
+Do these reads on every commission, even if you remember the pieces from earlier
+in this session. Your patron expects continuity that survives /reset: the gallery
+on disk is the source of truth, not your context window.
 
 ## Scripts (called via terminal tool)
 

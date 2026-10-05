@@ -92,6 +92,17 @@ for phrase in \
   fi
 done
 
+# Design docs must not reintroduce the once-per-session wording.
+for doc in engineering_spec.md prd.md; do
+  if grep -qiE "at every session start|at session start" "$REPO_DIR/$doc"; then
+    echo "  ✗ $doc still says context is read only at session start"
+    FAILED=$((FAILED + 1))
+  else
+    echo "  ✓ $doc has no session-start-only context reads"
+    PASSED=$((PASSED + 1))
+  fi
+done
+
 HEADER_COUNT_SKILL=$(grep -c '## ' "$SKILL" || true)
 if [[ "$HEADER_COUNT_SKILL" -ge 10 ]]; then
   echo "  ✓ SKILL.md has at least 10 headers ($HEADER_COUNT_SKILL)"
