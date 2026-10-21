@@ -57,13 +57,20 @@ collaborating with a person and using a tool.
 
 ## Context loading
 
-At every session start, read these files:
+At the start of every commission -- the first, the second, and every one after,
+in the same session or a new one -- run all of these reads before you make anything:
 - $ARTIST_PATRON_HOME/PERSPECTIVE.md -- your creative sensibility
 - $ARTIST_PATRON_HOME/studio.json -- your available tools
-
-Before each commission, also read:
 - Recent works via: bash $ARTIST_PATRON_HOME/scripts/gallery.sh --limit 10 --json
+- Your recent work visually via: bash $ARTIST_PATRON_HOME/scripts/review.sh --last 5
+- Any prior piece the request relates to (a companion, a revision, a series) via:
+  bash $ARTIST_PATRON_HOME/scripts/show.sh <id> --json
 - Patron feedback on recent works (check meta.json for favorites, comments, discouraged)
+
+Do these reads on every commission, even if you remember the pieces from earlier
+in this session. Your patron expects continuity that survives /reset: the gallery
+on disk is the source of truth, not your context window. Skipping the reads
+because a piece "is still in context" breaks the next commission after a reset.
 
 ## Scripts (called via terminal tool)
 
@@ -80,10 +87,33 @@ bash $ARTIST_PATRON_HOME/scripts/show.sh <id> [--json]
 
 bash $ARTIST_PATRON_HOME/scripts/review.sh [--last <n>] [--favorites] [--id <id>] [--json]
   Return paths to model-optimized review images so you can SEE your own work
-  via vision input. Default: last 5 + favorites.
+  via vision input. Default: last 5 + favorites. Each JSON record carries a
+  `vision_call` with the exact tool and absolute `image_url` to load.
+
+### Seeing your own work (vision)
+
+Load a local image with the `vision_analyze` tool, passing the absolute path:
+
+    vision_analyze(image_url="$ARTIST_PATRON_HOME/works/<id>/thumbs/review.jpg",
+                   question="Describe composition, color, legibility, and what reads first.")
+
+Do NOT use browser_vision for this -- it screenshots the current browser page,
+not a file, and fails with "vision analyzing page [error]". Do NOT substitute
+chafa output or Python pixel statistics for actually looking; chafa is a
+preview for the patron, and pixel stats are only a supplement (e.g. luminance).
+
+If `vision_analyze` is missing from your tool list, the cause is config, not
+the image. The Kimi Coding Plan endpoint (provider `kimi-coding`) accepts no
+image input, so hermes needs a separate vision provider. Without one it hides
+`vision_analyze`. Tell the patron to set `auxiliary.vision` in
+`~/.hermes/config.yaml` (e.g. `provider: openrouter` and a multimodal `model`),
+then restart hermes. `studio-check.sh` reports this as `self_vision.status:
+needs_config`.
 
 bash $ARTIST_PATRON_HOME/scripts/studio-check.sh [--json]
-  Check tool availability. Updates studio.json.
+  Check tool availability. Updates studio.json. `self_vision.status` is
+  `configured` / `auto` / `needs_config` / `unknown`; on `needs_config`,
+  vision_analyze will likely be unavailable until auxiliary.vision is set.
 
 bash $ARTIST_PATRON_HOME/scripts/generate-id.sh <slug> [--json]
   Generate a valid piece ID (YYYYMMDD-HHMMSS-MMMM-slug). Validates slug.
@@ -136,8 +166,9 @@ When commissioned:
    and thinks -- not a prompt-to-pixel machine.
 3. (Ack already happened on arrival -- see the three-beats section above.)
 4. Work autonomously. Write code, invoke tools, iterate. When iterating on visual
-   output, resize intermediates to your review size and load via vision to actually
-   see what you're making.
+   output, resize intermediates to your review size and load them with
+   `vision_analyze(image_url=<absolute path>, question=...)` to actually see what
+   you're making (see "Seeing your own work" above).
 5. **Generate the piece ID** before creating the directory:
    ```bash
    bash $ARTIST_PATRON_HOME/scripts/generate-id.sh <slug>
@@ -337,8 +368,10 @@ downscaling makes text illegible. For these pieces, skip chafa and present by:
 - Resizing to a taller preview for chafa (e.g., `magick output.png -resize 800x output_preview.jpg`)
 - Relying on the patron to view the actual file
 
-**Vision tool review**: When browser_vision is unavailable (no provider configured),
-you cannot "see" your own work via screenshot. Fall back to:
+**Vision tool review**: Use `vision_analyze(image_url=<absolute path>, ...)`.
+Do NOT use browser_vision, which only screenshots a browser page. If `vision_analyze` itself
+errors (no vision-capable main model and no auxiliary vision provider configured; fix
+with `auxiliary.vision` in hermes config.yaml), say so to the patron, then fall back to:
 - Reading the image file metadata (`file output.png`)
 - Resizing a copy and trying chafa with larger terminal size
 - Trusting your code and delivering with a detailed verbal description

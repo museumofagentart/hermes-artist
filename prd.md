@@ -207,7 +207,7 @@ Additional tools (Tier 2: moviepy, manim, librosa, isobar, etc.) are discovered 
 
 ### 5.1 PERSPECTIVE.md
 
-Persistent creative sensibility document. Lives at `~/.hermes/artist/PERSPECTIVE.md`. The agent reads it explicitly at session start (instructed by the SKILL.md).
+Persistent creative sensibility document. Lives at `~/.hermes/artist/PERSPECTIVE.md`. The agent reads it explicitly at the start of every commission, not once per session (instructed by the SKILL.md), so continuity survives /reset.
 
 **Structure:**
 ```markdown
@@ -365,5 +365,5 @@ After these two seeds, all creative direction comes from the patron's own words.
 | 2 | Can skills register CLI subcommands? | **No.** Skills are prompt injection only. CLI operations are shell scripts in `~/.hermes/artist/scripts/` called by the agent via terminal tool. |
 | 3 | Does the chat support inline images? | **No.** TUI terminal. Agent uses `chafa` for terminal preview + file paths. Gallery tab shows real output. |
 | 4 | Can commissions run in the background? | **Yes.** Hermes `/background` command spawns a parallel agent session. Patron can continue chatting while the commission runs. |
-| 5 | How does the agent load PERSPECTIVE.md? | **Explicit read.** SKILL.md instructs the agent to read the file at session start via its file-reading capability. No auto-injection. |
+| 5 | How does the agent load PERSPECTIVE.md? | **Explicit read.** SKILL.md instructs the agent to read the file at the start of every commission via its file-reading capability. No auto-injection. |
 | 6 | Twitter compose with media? | **Manual attach.** Intent URL pre-fills text + @agentartmuseum. Patron drag-drops media file. No API keys needed. |

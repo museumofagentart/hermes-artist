@@ -87,7 +87,8 @@ tools["curl"] = probe_cmd("curl", "curl --version", [r'curl\s+(\S+)'])
 tools["gallery-dl"] = probe_cmd("gallery-dl", "gallery-dl --version", [r'(\S+)'])
 
 # Detect model family from hermes config
-config_path = os.path.expanduser("~/.hermes/config.yaml")
+hermes_home = os.environ.get("HERMES_HOME") or os.path.expanduser("~/.hermes")
+config_path = os.path.join(hermes_home, "config.yaml")
 model_family = "unknown"
 review_size = 768
 
@@ -150,6 +151,41 @@ if os.path.exists(config_path):
         model_family = "unknown"
         review_size = 768
 
+# Self-vision readiness (hermes-da-kimi-6i6). The agent sees its own work via
+# hermes's vision_analyze tool. Kimi Coding Plan endpoints accept no image
+# input, so with auxiliary.vision.provider=auto hermes must find another vision
+# provider (OpenRouter/Nous); if none, vision_analyze is hidden and agents
+# misfire browser_vision ("vision analyzing page [error]").
+NO_VISION_PROVIDERS = {"kimi-coding", "kimi-coding-cn"}
+VISION_FIX = ("Set auxiliary.vision in hermes config.yaml to a vision-capable "
+              "provider, e.g. auxiliary.vision.provider: openrouter with a "
+              "multimodal model, or the Kimi Platform (api.moonshot.ai).")
+
+def self_vision_status(path):
+    if not os.path.exists(path):
+        return {"status": "unknown", "reason": "no hermes config.yaml found", "fix": VISION_FIX}
+    try:
+        import yaml
+        with open(path) as f:
+            cfg = yaml.safe_load(f) or {}
+    except Exception as e:
+        return {"status": "unknown", "reason": f"could not parse hermes config: {e}", "fix": VISION_FIX}
+    model = cfg.get("model") or {}
+    provider = str(model.get("provider") or "").strip().lower()
+    base_url = str(model.get("base_url") or "")
+    vision = ((cfg.get("auxiliary") or {}).get("vision") or {})
+    aux_provider = str(vision.get("provider") or "").strip().lower()
+    if aux_provider and aux_provider != "auto":
+        return {"status": "configured", "reason": f"auxiliary.vision.provider={aux_provider}", "fix": None}
+    if provider in NO_VISION_PROVIDERS or ("api.kimi.com" in base_url and "/coding" in base_url):
+        return {"status": "needs_config",
+                "reason": f"main provider {provider or base_url} (Kimi Coding Plan) has no image input "
+                          "and auxiliary.vision.provider is auto",
+                "fix": VISION_FIX}
+    return {"status": "auto", "reason": f"auxiliary.vision auto via main provider {provider or 'unset'}", "fix": None}
+
+self_vision = self_vision_status(config_path)
+
 tools_available = [name for name, info in tools.items() if info["available"]]
 tools_missing = [name for name, info in tools.items() if not info["available"]]
 
@@ -164,6 +200,7 @@ data = {
     "tools_missing": tools_missing,
     "review_size": review_size,
     "model_family": model_family,
+    "self_vision": self_vision,
 }
 
 with open(studio_file, "w") as f:
@@ -175,11 +212,19 @@ ENVELOPE_DATA=$(python3 -c "
 import json
 with open('$STUDIO_FILE') as f:
     d = json.load(f)
-print(json.dumps({'available': d.get('tools_available', []), 'missing': d.get('tools_missing', [])}))
+print(json.dumps({'available': d.get('tools_available', []), 'missing': d.get('tools_missing', []), 'self_vision': d.get('self_vision')}))
 ")
 
 if $JSON_OUT; then
   envelope_success "$ENVELOPE_DATA" '{"source":"artist-patron","updated":true}'
 else
   echo "Studio updated: $STUDIO_FILE"
+  python3 -c "
+import json
+sv = json.load(open('$STUDIO_FILE')).get('self_vision') or {}
+if sv.get('status') == 'needs_config':
+    print('WARNING: self-review vision is not set up; vision_analyze will likely be unavailable.')
+    print('  ' + sv.get('reason', ''))
+    print('  Fix: ' + sv.get('fix', ''))
+"
 fi

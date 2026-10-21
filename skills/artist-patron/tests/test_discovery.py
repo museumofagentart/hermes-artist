@@ -153,6 +153,41 @@ class TestFrontmatter:
 # ---------------------------------------------------------------------------
 
 
+class TestVisionSelfReview:
+    """Regression for hermes-da-kimi-6i6.
+
+    The display line '👁️ vision analyzing page [error]' is hermes's label for
+    browser_vision, which screenshots a *browser page*. Loading a local
+    review.jpg needs vision_analyze(image_url=<path>). SKILL.md must steer the
+    agent to the right tool and away from browser_vision for local files.
+    """
+
+    @pytest.fixture
+    def body(self):
+        return SKILL_MD.read_text()
+
+    def test_names_vision_analyze_with_image_url(self, body):
+        assert "vision_analyze" in body
+        assert re.search(r"vision_analyze\([^)]*image_url", body), (
+            "SKILL.md must show a vision_analyze(image_url=...) invocation"
+        )
+
+    def test_browser_vision_only_mentioned_as_prohibited(self, body):
+        for line in body.splitlines():
+            if "browser_vision" in line:
+                assert re.search(r"\b(not|never|NOT|NEVER)\b", line), (
+                    f"browser_vision must only appear as a prohibition: {line!r}"
+                )
+
+
+    def test_documents_kimi_coding_plan_vision_gap(self, body):
+        # Kimi Coding Plan has no image input; vision_analyze needs an
+        # auxiliary.vision provider or it is hidden from the tool list.
+        assert "Kimi Coding Plan" in body
+        assert "auxiliary.vision" in body
+        assert "self_vision" in body, "SKILL.md must point at studio-check's self_vision field"
+
+
 class TestScriptSelfLocation:
     """Verify scripts derive correct paths from their own location,
     independent of symlinks or env vars."""
